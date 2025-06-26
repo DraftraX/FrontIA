@@ -18,7 +18,8 @@ export default function LiveCyberAttack({
   const generateFakeAttack = () => {
     const start = fakeCoords[Math.floor(Math.random() * fakeCoords.length)];
     const end = fakeCoords[Math.floor(Math.random() * fakeCoords.length)];
-    const type = allAttackTypes[Math.floor(Math.random() * allAttackTypes.length)];
+    const type =
+      allAttackTypes[Math.floor(Math.random() * allAttackTypes.length)];
     const category = Object.keys(categoryMap).find((cat) =>
       categoryMap[cat].attacks.includes(type)
     );
@@ -40,7 +41,7 @@ export default function LiveCyberAttack({
     };
   };
 
-  function getPolygonCentroid(geometry) {
+  const getPolygonCentroid = (geometry) => {
     if (!geometry || !geometry.coordinates) return [0, 0];
     let coordinates = [];
 
@@ -61,16 +62,15 @@ export default function LiveCyberAttack({
     });
 
     const count = coordinates.length;
-
     return [lngSum / count, latSum / count];
-  }
+  };
 
   useEffect(() => {
     if (!globeEl.current) return;
 
     const globe = Globe()(globeEl.current)
       .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
-      .backgroundColor("#000011")
+      .backgroundColor("#000010")
       .showAtmosphere(true)
       .atmosphereColor("lightblue")
       .atmosphereAltitude(0.1)
@@ -94,21 +94,21 @@ export default function LiveCyberAttack({
 
         globe
           .polygonsData(countries)
-          .polygonCapColor(() => "rgba(0, 255, 0, 0.15)")
-          .polygonSideColor(() => "rgba(0, 100, 0, 0.3)")
-          .polygonStrokeColor(() => "#00ff00")
+          .polygonCapColor(() => "rgba(0, 255, 0, 0.1)")
+          .polygonSideColor(() => "rgba(0, 100, 0, 0.2)")
+          .polygonStrokeColor(() => "#00ff99")
           .polygonLabel(({ properties: d }) => `<b>${d.name}</b>`)
           .onPolygonClick((polygon) => {
             const countryName = polygon.properties.name;
             setFilterCountry(countryName);
             setCountryInfo({
               name: countryName,
-              description: `Información específica para ${countryName}.`,
+              description: `Amenazas activas hacia o desde ${countryName}.`,
             });
           })
           .onPolygonHover((polygon) => {
             globe.polygonCapColor((d) =>
-              d === polygon ? "rgba(255,255,255,0.4)" : "rgba(0, 255, 0, 0.15)"
+              d === polygon ? "rgba(255,255,255,0.4)" : "rgba(0, 255, 0, 0.1)"
             );
           });
 
@@ -127,8 +127,8 @@ export default function LiveCyberAttack({
           .labelLng((d) => d.lng)
           .labelText((d) => d.text)
           .labelColor(() => "white")
-          .labelSize(() => 0.5)
-          .labelDotRadius(() => 0.1)
+          .labelSize(() => 0.45)
+          .labelDotRadius(() => 0.08)
           .labelResolution(2);
       });
 
@@ -157,55 +157,50 @@ export default function LiveCyberAttack({
     let filtered = attacks;
     if (filterCountry && filterCountry !== "") {
       filtered = attacks.filter(
-        (a) => a.startCountry === filterCountry || a.endCountry === filterCountry
+        (a) =>
+          a.startCountry === filterCountry || a.endCountry === filterCountry
       );
     }
 
     globeInstance.current
       .arcsData(filtered)
       .arcColor((d) => d.color || "white")
-      .arcAltitude(0.2)
+      .arcAltitude(0.25)
       .arcStroke(0.8)
       .arcDashLength(0.5)
       .arcDashGap(0.4)
-      .arcDashAnimateTime(4000);
+      .arcDashAnimateTime(3500);
   }, [attacks, filterCountry]);
 
   useEffect(() => {
-    if (typeof onUpdateAttacks !== "function") {
-      console.warn("onUpdateAttacks no es función, no se generan ataques falsos.");
-      return;
-    }
-
+    if (typeof onUpdateAttacks !== "function") return;
     const interval = setInterval(() => {
       const attack = generateFakeAttack();
-      onUpdateAttacks((prev) => {
-        if (!Array.isArray(prev)) return [attack];
-        return [...prev.slice(-999), attack];
-      });
+      onUpdateAttacks((prev) => [
+        ...(Array.isArray(prev) ? prev.slice(-999) : []),
+        attack,
+      ]);
     }, 500);
 
     return () => clearInterval(interval);
   }, [onUpdateAttacks]);
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: 0 }}>
-      <div
-        className="w-full h-full"
-        ref={globeEl}
-        style={{ minHeight: 0, minWidth: 0 }}
-      ></div>
+    <div className="relative w-full h-full bg-black">
+      <div ref={globeEl} className="w-full h-full" style={{ minHeight: 0 }} />
 
       {countryInfo && (
-        <div className="absolute bottom-10 left-10 bg-black bg-opacity-80 text-white p-4 rounded-md max-w-xs shadow-md">
-          <h3 className="text-lg font-semibold mb-1">{countryInfo.name}</h3>
-          <p>{countryInfo.description}</p>
+        <div className="absolute bottom-6 left-6 bg-black/80 backdrop-blur-md text-white p-4 rounded-xl shadow-lg border border-cyan-500 w-72 space-y-2">
+          <div className="text-lg font-semibold text-cyan-300">
+            {countryInfo.name}
+          </div>
+          <p className="text-sm text-gray-300">{countryInfo.description}</p>
           <button
-            className="mt-2 px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
             onClick={() => {
               setFilterCountry("");
               setCountryInfo(null);
             }}
+            className="mt-2 px-3 py-1 bg-cyan-600 hover:bg-cyan-700 text-white text-sm rounded-full transition duration-200"
           >
             Limpiar filtro
           </button>

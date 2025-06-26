@@ -1,96 +1,123 @@
-import React, { useState, useEffect } from "react";
-import { 
-  AlertTriangle, 
-  Shield, 
-  X, 
-  Volume2, 
+import { useState, useEffect } from "react";
+import {
+  AlertTriangle,
+  Shield,
+  X,
+  Volume2,
   VolumeX,
   Bell,
   Clock,
-  MapPin
+  MapPin,
 } from "lucide-react";
 
-const AlertSystem = ({ attacks }) => {
+const AlertSystem = ({ filteredAttacks = [], filterCountry }) => {
   const [alerts, setAlerts] = useState([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showAlerts, setShowAlerts] = useState(true);
 
   const criticalAttacks = ["Zero-Day", "Ransomware", "DDoS", "SQL Injection"];
-  
+
   useEffect(() => {
-    if (!attacks || attacks.length === 0) return;
+    if (!filteredAttacks || filteredAttacks.length === 0) return;
 
-    const latestAttack = attacks[attacks.length - 1];
-    
-    if (criticalAttacks.includes(latestAttack.classification)) {
-      const newAlert = {
-        id: `alert-${Date.now()}`,
-        type: "critical",
-        title: "¡ATAQUE CRÍTICO DETECTADO!",
-        message: `${latestAttack.classification} detectado desde ${latestAttack.startCountry} hacia ${latestAttack.endCountry}`,
-        timestamp: new Date(),
-        attack: latestAttack,
-        severity: "high"
-      };
+    const uniqueAttacks = [];
+    const seenIds = new Set();
 
-      setAlerts(prev => [newAlert, ...prev.slice(0, 2)]); // Solo mantener 3 alertas máximo
-
-      if (soundEnabled) {
-        playAlertSound();
+    for (
+      let i = filteredAttacks.length - 1;
+      i >= 0 && uniqueAttacks.length < 3;
+      i--
+    ) {
+      const attack = filteredAttacks[i];
+      if (!seenIds.has(attack.id)) {
+        uniqueAttacks.push(attack);
+        seenIds.add(attack.id);
       }
     }
-  }, [attacks, soundEnabled]);
+
+    const newAlerts = uniqueAttacks
+      .filter((attack) => criticalAttacks.includes(attack.classification))
+      .map((attack) => ({
+        id: `alert-${attack.id}`,
+        type: "critical",
+        title: "¡ATAQUE CRÍTICO DETECTADO!",
+        message: `${attack.classification} detectado desde ${attack.startCountry} hacia ${attack.endCountry}`,
+        timestamp: new Date(attack.time || Date.now()),
+        attack,
+        severity: "high",
+      }));
+
+    setAlerts(newAlerts);
+
+    if (newAlerts.length > 0 && soundEnabled) {
+      playAlertSound();
+    }
+  }, [filteredAttacks, soundEnabled]);
 
   const playAlertSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
     oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
     oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-    
+
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-    
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.3
+    );
+
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
   };
 
   const dismissAlert = (alertId) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
   };
 
   const formatTime = (timestamp) => {
-    return timestamp.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
+    return timestamp.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
   const getSeverityColor = (severity) => {
     switch (severity) {
-      case "high": return "border-red-500 bg-red-500/10";
-      case "medium": return "border-yellow-500 bg-yellow-500/10";
-      case "low": return "border-blue-500 bg-blue-500/10";
-      default: return "border-gray-500 bg-gray-500/10";
+      case "high":
+        return "border-red-500 bg-red-500/10";
+      case "medium":
+        return "border-yellow-500 bg-yellow-500/10";
+      case "low":
+        return "border-blue-500 bg-blue-500/10";
+      default:
+        return "border-gray-500 bg-gray-500/10";
     }
   };
 
   const getSeverityIcon = (severity) => {
     switch (severity) {
-      case "high": return <AlertTriangle className="w-5 h-5 text-red-400" />;
-      case "medium": return <Shield className="w-5 h-5 text-yellow-400" />;
-      case "low": return <Bell className="w-5 h-5 text-blue-400" />;
-      default: return <Bell className="w-5 h-5 text-gray-400" />;
+      case "high":
+        return <AlertTriangle className="w-5 h-5 text-red-400" />;
+      case "medium":
+        return <Shield className="w-5 h-5 text-yellow-400" />;
+      case "low":
+        return <Bell className="w-5 h-5 text-blue-400" />;
+      default:
+        return <Bell className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  if (!showAlerts) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+
+  if (isMobile && !showAlerts) {
     return (
       <button
         onClick={() => setShowAlerts(true)}
@@ -107,36 +134,51 @@ const AlertSystem = ({ attacks }) => {
   }
 
   return (
-    <div className="fixed top-20 right-4 z-50 w-96 space-y-2">
+    <div
+      className={`
+        ${isMobile ? "fixed top-20 right-4 z-50 w-96" : "relative w-full"}
+        space-y-2
+      `}
+    >
       <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-cyan-400" />
           <span className="text-white font-semibold">Sistema de Alertas</span>
+          {filterCountry && (
+            <span className="text-sm text-yellow-400 ml-2">
+              ({filterCountry})
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`p-2 rounded-lg transition-all ${
-              soundEnabled 
-                ? "bg-green-600 hover:bg-green-700 text-white" 
+              soundEnabled
+                ? "bg-green-600 hover:bg-green-700 text-white"
                 : "bg-gray-600 hover:bg-gray-700 text-gray-300"
             }`}
             title={soundEnabled ? "Desactivar sonido" : "Activar sonido"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
           </button>
-          <button
-            onClick={() => setShowAlerts(false)}
-            className="p-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-gray-300 transition-all"
-            title="Minimizar alertas"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {isMobile && (
+            <button
+              onClick={() => setShowAlerts(false)}
+              className="p-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-gray-300 transition-all"
+              title="Minimizar alertas"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Solo mostrar máximo 3 alertas, sin scroll */}
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
         {alerts.length === 0 ? (
           <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg p-4 text-center">
             <Shield className="w-8 h-8 text-green-400 mx-auto mb-2" />
@@ -147,7 +189,9 @@ const AlertSystem = ({ attacks }) => {
           alerts.slice(0, 3).map((alert) => (
             <div
               key={alert.id}
-              className={`bg-gray-900/95 backdrop-blur-sm border-2 rounded-lg p-4 transition-all duration-300 hover:scale-105 ${getSeverityColor(alert.severity)}`}
+              className={`bg-gray-900/95 backdrop-blur-sm border-2 rounded-lg p-4 transition-all duration-300 hover:scale-105 ${getSeverityColor(
+                alert.severity
+              )}`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
@@ -178,11 +222,10 @@ const AlertSystem = ({ attacks }) => {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              
               <div className="mt-3 pt-3 border-t border-gray-700">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-400">Tipo de ataque:</span>
-                  <span 
+                  <span
                     className="px-2 py-1 rounded-full text-white font-semibold"
                     style={{ backgroundColor: alert.attack.color }}
                   >
@@ -200,7 +243,8 @@ const AlertSystem = ({ attacks }) => {
           <div className="flex items-center justify-center gap-2">
             <AlertTriangle className="w-5 h-5 text-white" />
             <span className="text-white font-bold text-sm">
-              {alerts.length} ALERTA{alerts.length > 1 ? 'S' : ''} CRÍTICA{alerts.length > 1 ? 'S' : ''} ACTIVA{alerts.length > 1 ? 'S' : ''}
+              {alerts.length} ALERTA{alerts.length > 1 ? "S" : ""} CRÍTICA
+              {alerts.length > 1 ? "S" : ""} ACTIVA
             </span>
           </div>
         </div>
