@@ -8,11 +8,28 @@ export default function Header() {
           EMBER GUARD
         </div>
       </Link>
-      <Link to="/stats">
-        <button className="bg-transparent border border-white text-white px-4 py-2 text-sm font-bold hover:bg-white hover:text-black transition-colors duration-200">
-          STATS
-        </button>
-      </Link>
+      <div className="flex items-center gap-4">
+        <Link to="/stats">
+          <button className="bg-transparent border border-white text-white px-4 py-2 text-sm font-bold hover:bg-white hover:text-black transition-colors duration-200">
+            STATS
+          </button>
+        </Link>
+        <Link to="/login">
+          <button className="bg-transparent border border-white text-white px-4 py-2 text-sm font-bold hover:bg-white hover:text-black transition-colors duration-200">
+            Account
+          </button>
+        </Link>
+        <Link to="/encryption">
+          <button className="bg-transparent border border-white text-white px-4 py-2 text-sm font-bold hover:bg-white hover:text-black transition-colors duration-200">
+            ENCRYPTION
+          </button>
+        </Link>
+        <Link to="/decrypt">
+          <button className="bg-transparent border border-white text-white px-4 py-2 text-sm font-bold hover:bg-white hover:text-black transition-colors duration-200">
+            DECRYPTION
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }

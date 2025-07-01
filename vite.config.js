@@ -7,4 +7,18 @@ export default defineConfig({
   optimizeDeps: {
     include: ["react-map-gl"],
   },
+  define: {
+  'process.env': {},
+},
+resolve: {
+  alias: {
+    crypto: 'crypto-browserify',
+    buffer: 'buffer',
+  },
+},
+optimizeDeps: {
+  include: ['buffer', 'crypto'],
+},
+
+
 })
