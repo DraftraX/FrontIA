@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios";
+import { API_URL } from "../../../utils/ApiRuta";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 
@@ -7,6 +9,7 @@ import AnalisisPuertos from "./components/AnalisisPuertos";
 import EstadoEdificio from "./components/EstadoEdificio";
 import MapaCampus from "./components/MapaCampus";
 import TiposEscaneo from "./components/TiposEscaneo";
+import TablaLogs from "./components/TablaLogs";
 
 const StatCard = ({ title, value }) => (
   <div className="bg-neutral-900/60 backdrop-blur-sm border border-neutral-800 rounded-xl p-4">
@@ -22,44 +25,60 @@ export default function Stats() {
     commonPorts: [],
     buildings: [],
     scanTypes: [],
+    logs: [],
   });
-
-  const generateRandomData = () => {
-    const ports = [22, 80, 443, 21, 23, 3389, 25, 53, 110, 143];
-    const buildings = [
-      "Facultad de Ingeniería",
-      "Biblioteca Central",
-      "Centro de Cómputo",
-      "Administración",
-      "Laboratorios",
-      "Aulas Virtuales",
-    ];
-
-    return {
-      commonPorts: ports.map((port) => ({
-        port,
-        attempts: Math.floor(Math.random() * 200),
-      })),
-      buildings: buildings.map((name) => ({
-        name,
-        alerts: Math.floor(Math.random() * 25),
-        devices: Math.floor(Math.random() * 50) + 10,
-      })),
-      scanTypes: [
-        { type: "TCP SYN", count: Math.floor(Math.random() * 200) },
-        { type: "UDP", count: Math.floor(Math.random() * 150) },
-        { type: "TCP Connect", count: Math.floor(Math.random() * 100) },
-      ],
-    };
-  };
+  const [timelineData, setTimelineData] = useState([]);
 
   useEffect(() => {
-    const updateData = () => {
-      setData(generateRandomData());
+    const fetchSnortLogs = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/deteccion/logs-snort/`);
+        const alerts = res.data;
+
+        const ports = {};
+        const types = {};
+        const timeline = Array(24).fill(0);
+
+        alerts.forEach((alert) => {
+          const port = parseInt(alert.dst_port);
+          const hour = alert.timestamp?.split(":")[0] || "00";
+
+          ports[port] = (ports[port] || 0) + 1;
+
+          const type = alert.message.includes("SYN")
+            ? "TCP SYN"
+            : alert.protocol;
+          types[type] = (types[type] || 0) + 1;
+
+          timeline[parseInt(hour)] += 1;
+        });
+
+        setData({
+          commonPorts: Object.entries(ports).map(([port, attempts]) => ({
+            port,
+            attempts,
+          })),
+          buildings: [],
+          scanTypes: Object.entries(types).map(([type, count]) => ({
+            type,
+            count,
+          })),
+          logs: alerts,
+        });
+
+        setTimelineData(
+          timeline.map((count, i) => ({
+            hour: `${i.toString().padStart(2, "0")}:00`,
+            portScans: count,
+          }))
+        );
+      } catch (error) {
+        console.error("Error al obtener logs de Snort:", error);
+      }
     };
 
-    updateData();
-    const interval = setInterval(updateData, 5000);
+    fetchSnortLogs();
+    const interval = setInterval(fetchSnortLogs, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -68,13 +87,6 @@ export default function Stats() {
     return () => clearInterval(timer);
   }, []);
 
-  const timelineData = useMemo(() => {
-    return Array.from({ length: 24 }, (_, i) => ({
-      hour: `${i.toString().padStart(2, "0")}:00`,
-      portScans: Math.floor(Math.random() * 30) + 5,
-    }));
-  }, [currentTime.getMinutes()]);
-
   const stats = useMemo(
     () => ({
       totalScans: data.commonPorts.reduce(
@@ -82,7 +94,7 @@ export default function Stats() {
         0
       ),
       totalBuildings: data.buildings.length,
-      activeAlerts: data.buildings.reduce((sum, b) => sum + b.alerts, 0),
+      activeAlerts: data.commonPorts.reduce((sum, p) => sum + p.attempts, 0),
       totalDevices: data.buildings.reduce((sum, b) => sum + b.devices, 0),
     }),
     [data]
@@ -94,6 +106,7 @@ export default function Stats() {
     { id: "buildings", label: "Edificios" },
     { id: "timeline", label: "Actividad" },
     { id: "types", label: "Tipos" },
+    { id: "logs", label: "Logs" },
   ];
 
   return (
@@ -101,7 +114,6 @@ export default function Stats() {
       <Header />
 
       <div className="pt-24 pb-16 px-6 max-w-7xl mx-auto w-full">
-        {/* Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard title="Escaneos" value={stats.totalScans} />
           <StatCard title="Edificios" value={stats.totalBuildings} />
@@ -109,7 +121,6 @@ export default function Stats() {
           <StatCard title="Dispositivos" value={stats.totalDevices} />
         </div>
 
-        {/* Tabs */}
         <div className="flex space-x-2 mb-6 text-sm">
           {tabs.map(({ id, label }) => (
             <button
@@ -126,7 +137,6 @@ export default function Stats() {
           ))}
         </div>
 
-        {/* Views */}
         <div className="space-y-6">
           {activeTab === "map" && (
             <MapaCampus activeAlerts={stats.activeAlerts} />
@@ -139,6 +149,7 @@ export default function Stats() {
             <ActividadTemporal timelineData={timelineData} />
           )}
           {activeTab === "types" && <TiposEscaneo data={data.scanTypes} />}
+          {activeTab === "logs" && <TablaLogs logs={data.logs} />}
         </div>
       </div>
 
