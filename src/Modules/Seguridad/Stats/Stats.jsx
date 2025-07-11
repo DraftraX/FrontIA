@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios";
-import { API_URL } from "../../../utils/ApiRuta";
+import tokenItem from "../../../utils/TokenItem";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 
@@ -32,7 +31,7 @@ export default function Stats() {
   useEffect(() => {
     const fetchSnortLogs = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/deteccion/logs-snort/`);
+        const res = await tokenItem.get(`/api/deteccion/logs-snort/`); // ✅ Autenticado
         const alerts = res.data;
 
         const ports = {};
@@ -58,7 +57,7 @@ export default function Stats() {
             port,
             attempts,
           })),
-          buildings: [],
+          buildings: [], // Si tienes data, reemplaza esto
           scanTypes: Object.entries(types).map(([type, count]) => ({
             type,
             count,

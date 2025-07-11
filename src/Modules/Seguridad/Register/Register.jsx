@@ -1,143 +1,92 @@
+// src/Modules/Seguridad/Register.jsx
 import React, { useState } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
+import { message } from "antd";
+import tokenItem from "../../../utils/TokenItem";
+import RegisterForm from "./components/RegisterForm";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [codeInput, setCodeInput] = useState("");
-  const [codeVerified, setCodeVerified] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState("");
 
-  // Simular código enviado (en producción sería desde backend)
-  const [verificationCode] = useState(() =>
-    Math.floor(100000 + Math.random() * 900000).toString()
-  );
-
-  const sendCodeToEmail = () => {
+  const sendCode = async () => {
     if (!email.includes("@") || !email.includes(".")) {
-      alert("Correo electrónico inválido.");
+      message.error("Correo inválido");
       return;
     }
 
-    console.log(`(Simulado) Código enviado a ${email}: ${verificationCode}`);
-    setCodeSent(true);
-    alert(`Código de verificación enviado a ${email} (simulado en consola)`);
-  };
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
 
-  const verifyCode = () => {
-    if (codeInput === verificationCode) {
-      setCodeVerified(true);
-      alert("Correo verificado correctamente.");
-    } else {
-      alert("Código incorrecto.");
+    try {
+      await tokenItem.post("/api/auth/enviar-codigo/", { email, code });
+      setCodeSent(true);
+      message.success(`Código enviado a ${email}`);
+    } catch (err) {
+      console.error(err);
+      message.error("Error al enviar el código");
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Registrando usuario:", { email, username, password });
-    // Aquí agregar lógica de envío a backend con Axios si deseas
+  const verifyCode = async () => {
+    if (codeInput === generatedCode) {
+      setEmailVerified(true);
+      message.success("Correo verificado correctamente");
+    } else {
+      message.error("Código incorrecto");
+    }
   };
 
   return (
     <div className="flex flex-col h-screen bg-black text-white font-mono">
       <Header />
-      <main className="flex flex-1 items-center justify-center relative overflow-hidden">
-        <div className="w-full max-w-md p-8 bg-[#1e1e1e] rounded-xl shadow-2xl border border-pink-500">
+      <main className="flex flex-1 items-center justify-center">
+        <div className="w-full max-w-md p-8 bg-[#1e1e1e] rounded-xl border border-pink-500 shadow-2xl">
           <h2 className="text-3xl font-bold text-center mb-6 text-pink-500">
             Registro
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Paso 1: Correo */}
-            <div className="flex flex-col">
-              <label htmlFor="email" className="text-sm mb-1">
-                Correo electrónico
-              </label>
+
+          {!codeSent && (
+            <div className="flex flex-col space-y-3">
+              <label className="text-sm">Correo electrónico</label>
               <input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none transition-colors"
-                required
-                disabled={codeSent}
+                className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none"
               />
-              {!codeSent && (
-                <button
-                  type="button"
-                  onClick={sendCodeToEmail}
-                  className="mt-3 py-1 border border-pink-500 rounded-full hover:bg-pink-500 hover:text-black transition"
-                >
-                  Enviar código
-                </button>
-              )}
+              <button
+                onClick={sendCode}
+                className="py-1 border border-pink-500 rounded-full hover:bg-pink-500 hover:text-black transition"
+              >
+                Enviar código
+              </button>
             </div>
+          )}
 
-            {/* Paso 2: Verificación */}
-            {codeSent && !codeVerified && (
-              <div className="flex flex-col">
-                <label htmlFor="code" className="text-sm mb-1">
-                  Código recibido
-                </label>
-                <input
-                  id="code"
-                  type="text"
-                  value={codeInput}
-                  onChange={(e) => setCodeInput(e.target.value)}
-                  className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={verifyCode}
-                  className="mt-3 py-1 border border-pink-500 rounded-full hover:bg-pink-500 hover:text-black transition"
-                >
-                  Verificar código
-                </button>
-              </div>
-            )}
+          {codeSent && !emailVerified && (
+            <div className="flex flex-col space-y-3">
+              <label className="text-sm mt-4">Código de verificación</label>
+              <input
+                type="text"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none"
+              />
+              <button
+                onClick={verifyCode}
+                className="py-1 border border-pink-500 rounded-full hover:bg-pink-500 hover:text-black transition"
+              >
+                Verificar código
+              </button>
+            </div>
+          )}
 
-            {/* Paso 3: Username & Password */}
-            {codeVerified && (
-              <>
-                <div className="flex flex-col">
-                  <label htmlFor="username" className="text-sm mb-1">
-                    Username
-                  </label>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col">
-                  <label htmlFor="password" className="text-sm mb-1">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2 mt-4 font-semibold border-2 border-pink-500 rounded-full hover:bg-pink-500 hover:text-black transition-colors"
-                >
-                  Registrar
-                </button>
-              </>
-            )}
-          </form>
+          {emailVerified && <RegisterForm email={email} />}
         </div>
       </main>
       <Footer />

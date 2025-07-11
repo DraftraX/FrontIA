@@ -1,16 +1,38 @@
 import React, { useState } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import tokenItem from "../../../utils/TokenItem";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt:", { username, password });
-    // Aquí puedes agregar lógica con Axios
+    setErrorMsg("");
+
+    try {
+      const response = await tokenItem.post("/api/auth/login/", {
+        username,
+        password,
+      });
+
+      const { access, refresh, user } = response.data;
+
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      localStorage.setItem("user", JSON.stringify(user));
+      if (user.session_token) {
+        localStorage.setItem("session_token", user.session_token);
+      }
+
+      navigate(`/profile?s=${user.id_encriptado}`);
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrorMsg("Credenciales inválidas. Intenta nuevamente.");
+    }
   };
 
   return (
@@ -22,6 +44,10 @@ export default function Login() {
             Login
           </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {errorMsg && (
+              <div className="text-red-500 text-sm text-center">{errorMsg}</div>
+            )}
+
             <div className="flex flex-col">
               <label htmlFor="username" className="text-sm mb-1">
                 Username
