@@ -1,17 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 import tokenItem from "../../../utils/TokenItem";
+
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+
+    if (!captchaToken) {
+      setErrorMsg("Completa el reCAPTCHA.");
+      return;
+    }
 
     try {
       const response = await tokenItem.post("/api/auth/login/", {
@@ -31,7 +40,12 @@ export default function Login() {
       navigate(`/profile?s=${user.id_encriptado}`);
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMsg("Credenciales inválidas. Intenta nuevamente.");
+
+      if (error.response?.status === 403) {
+        setErrorMsg(error.response.data?.error || "Sesión ya activa.");
+      } else {
+        setErrorMsg("Credenciales inválidas. Intenta nuevamente.");
+      }
     }
   };
 
@@ -73,6 +87,14 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="px-4 py-2 bg-transparent border-b-2 border-white focus:border-pink-500 outline-none transition-colors"
                 required
+              />
+            </div>
+
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                sitekey="6Le1z38rAAAAAPViYlDru5xnauKso4kVA8ddPvTf"
+                ref={recaptchaRef}
+                onChange={(token) => setCaptchaToken(token)}
               />
             </div>
 
