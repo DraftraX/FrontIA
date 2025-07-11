@@ -32,7 +32,7 @@ export default function Profile() {
         <div className="bg-[#1e1e1e] border border-pink-500 rounded-2xl shadow-2xl max-w-xl w-full p-8 text-sm">
           <div className="flex flex-col items-center mb-6">
             <img
-              src="https://scontent.ftnm2-1.fna.fbcdn.net/v/t39.30808-6/514666576_24351196214497773_2865315387080259658_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeGSTsPfULZXIPnczg69OP74DdPBPxY5tKIN08E_Fjm0oqdXutnciTKgyIGyTHf9JmbD-vkMkjwUIZrrh0N3OG73&_nc_ohc=yEN3LwzXdl0Q7kNvwExxRW8&_nc_oc=AdmCFGhOjuJ36iTby0keNe59wI3Rbn7Qaace6jRS5Al6CkF9rKsYLWzvUhvnNvKzjkguapmEj0nYpPBlW_WxE8oy&_nc_zt=23&_nc_ht=scontent.ftnm2-1.fna&_nc_gid=fN1D6JW1RsMwxr6cCDcMNg&oh=00_AfRsztixe3iP0iIgmbB_ZjlC5a4cKcc78Ec-gvyWQcMKYg&oe=686F94AD"
+              src="/gato.jpg"
               alt="Avatar"
               className="w-32 h-32 rounded-full border-4 border-pink-500 shadow-lg object-cover"
             />
