@@ -26,7 +26,35 @@ export default function Header() {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const accessToken = localStorage.getItem("access");
+
+      if (!accessToken) {
+        console.warn("No token disponible");
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("http://localhost:8000/api/auth/logout/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        console.log("Logout exitoso");
+      } else {
+        console.warn("Error al cerrar sesión:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error al contactar API logout:", error);
+    }
+
+    // Limpia y redirige siempre (seguridad)
     localStorage.clear();
     navigate("/login");
   };
