@@ -63,7 +63,7 @@ export default function Header() {
     <div className="absolute top-0 left-0 right-0 z-20 bg-transparent px-6 py-4 flex items-center justify-between">
       <Link to="/home">
         <div className="text-white text-2xl font-bold tracking-wide flex items-center gap-3">
-          <img className="h-8" src="/logo.jpeg" alt="Ember Guard" />
+          <img className="h-8" src="../../logo.jpeg" alt="Ember Guard" />
           EMBER GUARD
         </div>
       </Link>
