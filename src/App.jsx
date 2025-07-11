@@ -8,7 +8,6 @@ import Decrypt from "./Modules/Decrypt";
 import Profile from "./Modules/Seguridad/Perfil/Profile";
 import EditarPerfil from "./Modules/Seguridad/Perfil/components/EditarPerfil";
 import ListaUsuarios from "./Modules/Seguridad/Perfil/components/ListaUsuarios";
-import GestionPermisos from "./Modules/Seguridad/Perfil/components/Permisos";
 
 import LayoutProtegido from "./layouts/LayoutProtegido";
 
@@ -28,7 +27,6 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/editar-perfil" element={<EditarPerfil />} />
           <Route path="/lista-usuarios" element={<ListaUsuarios />} />
-          <Route path="/gestion-permisos" element={<GestionPermisos />} />
         </Route>
       </Routes>
     </BrowserRouter>

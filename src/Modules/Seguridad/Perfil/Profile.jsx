@@ -76,11 +76,6 @@ export default function Profile() {
                     Ver lista de usuarios
                   </button>
                 </Link>
-                <Link to="/gestion-permisos">
-                  <button className="w-full py-2 border border-yellow-500 rounded hover:bg-yellow-500 hover:text-black transition">
-                    Gestión de permisos
-                  </button>
-                </Link>
               </>
             )}
           </div>
