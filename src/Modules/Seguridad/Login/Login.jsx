@@ -92,7 +92,7 @@ export default function Login() {
 
             <div className="flex justify-center">
               <ReCAPTCHA
-                sitekey="6Le1z38rAAAAAPViYlDru5xnauKso4kVA8ddPvTf"
+                sitekey="6Lck7n8rAAAAAOUjQz9qVnfh9iJ2GX9r84aCLdhC"
                 ref={recaptchaRef}
                 onChange={(token) => setCaptchaToken(token)}
               />
