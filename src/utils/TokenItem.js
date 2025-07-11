@@ -1,7 +1,6 @@
 // src/utils/TokenItem.js
 import axios from 'axios';
-
-const API_URL = "http://localhost:8000";
+import { API_URL } from './ApiRuta';
 
 const tokenItem = axios.create({
   baseURL: API_URL,
